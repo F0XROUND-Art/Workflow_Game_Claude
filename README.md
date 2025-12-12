@@ -6,7 +6,7 @@ Claudeに作ってもらいました。HTML形式で遊べます。
 **制作者：F0XROUND-Art (X, Twitter アカウント: 𝐅𝟎𝐗𝐑𝐎𝐔𝐍𝐃.𝔄𝔯𝔱 @FOXROUND_Art)**
 
 [ゲームはココから遊べます]
-👉(https://f0xround-art.github.io/Workflow_Game_Claude/Workflow_Game_Claude.html)
+👉<a href="https://f0xround-art.github.io/Workflow_Game_Claude/Workflow_Game_Claude.html" target="_blank">Play the game here</a>
 
 ## ライセンス
 このプロジェクトは Apache 2.0 License の下で公開されています。  
@@ -22,7 +22,7 @@ Created with Claude. Playable in HTML format.
 **Created by F0XROUND-Art (X, Twitter Account: 𝐅𝟎𝐗𝐑𝐎𝐔𝐍𝐃.𝔄𝔯𝔱 @FOXROUND_Art)**
 
 [Play the game here]
-👉(https://f0xround-art.github.io/Workflow_Game_Claude/Workflow_Game_Claude.html)
+👉<a href="https://f0xround-art.github.io/Workflow_Game_Claude/Workflow_Game_Claude.html" target="_blank">Play the game here</a>
 
 ## License
 This project is licensed under the Apache 2.0 License.  
