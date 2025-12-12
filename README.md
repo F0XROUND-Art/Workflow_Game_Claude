@@ -5,6 +5,9 @@ Claudeに作ってもらいました。HTML形式で遊べます。
 
 **制作者：F0XROUND-Art (X, Twitter アカウント: 𝐅𝟎𝐗𝐑𝐎𝐔𝐍𝐃.𝔄𝔯𝔱 @FOXROUND_Art)**
 
+[ゲームはココから遊べます]
+👉(https://f0xround-art.github.io/Workflow_Game_Claude/Workflow_Game_Claude.html)
+
 ## ライセンス
 このプロジェクトは Apache 2.0 License の下で公開されています。  
 改良版を公開する場合は、オリジナルの著作権表記を残し、変更を加えた旨を明記してください。
@@ -17,6 +20,9 @@ A simple game related to workflows.
 Created with Claude. Playable in HTML format.
 
 **Created by F0XROUND-Art (X, Twitter Account: 𝐅𝟎𝐗𝐑𝐎𝐔𝐍𝐃.𝔄𝔯𝔱 @FOXROUND_Art)**
+
+[Play the game here]
+👉(https://f0xround-art.github.io/Workflow_Game_Claude/Workflow_Game_Claude.html)
 
 ## License
 This project is licensed under the Apache 2.0 License.  
