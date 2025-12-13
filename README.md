@@ -1,4 +1,4 @@
-# ワークフロー・ゲーム・クロード / Workflow Game Claude
+# ワークフロー・ゲーム・クロード v26
 
 これはワークフローについてのシンプルなゲームです。  
 Claudeに作ってもらいました。HTML形式で遊べます。
@@ -14,7 +14,7 @@ Claudeに作ってもらいました。HTML形式で遊べます。
 
 ---
 
-# Workflow Game Claude
+# Workflow Game Claude v26
 
 A simple game related to workflows.  
 Created with Claude. Playable in HTML format.
