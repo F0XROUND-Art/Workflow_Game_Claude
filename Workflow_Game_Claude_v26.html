@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ワークフロー構築ゲーム</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            color: white;
+            text-align: center;
+        }
+        .header h1 { font-size: 1.5em; margin-bottom: 10px; }
+        .reset-data {
+            margin-top: 10px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.7);
+            cursor: pointer;
+        }
+        .reset-data:hover { color: white; text-decoration: underline; }
+        .level-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            font-size: 14px;
+        }
+        .level-selector {
+            margin-top: 15px;
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .level-btn {
+            width: 40px;
+            height: 40px;
+            border: 2px solid rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            position: relative;
+            font-size: 16px;
+        }
+        .level-btn:hover, .level-btn:active { background: rgba(255,255,255,0.4); }
+        .level-btn.active { background: rgba(255,255,255,0.9); color: #667eea; }
+        .level-btn.cleared::after {
+            content: '✓';
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #48bb78;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 12px;
+        }
+        .game-area { padding: 15px; }
+        .instructions {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+        .instructions h3 { color: #667eea; margin-bottom: 10px; font-size: 1.1em; }
+        .scenario {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        .device-instruction {
+            margin-top: 10px;
+            padding: 10px;
+            background: #fff3cd;
+            border-radius: 5px;
+            font-size: 13px;
+        }
+        .workspace {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        @media (min-width: 768px) {
+            .workspace {
+                grid-template-columns: 280px 1fr;
+                gap: 30px;
+            }
+            .header h1 { font-size: 2em; }
+            .game-area { padding: 40px; }
+        }
+        .node-palette {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .node-palette h3 { margin-bottom: 15px; color: #667eea; }
+        .palette-node {
+            background: white;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 3px solid #e0e0e0;
+            transition: all 0.3s;
+            position: relative;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .palette-node:active { transform: scale(0.95); }
+        .palette-node.selected {
+            border-color: #ffc107;
+            background: #fff3cd;
+            box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
+        }
+        .palette-node:hover { border-color: #667eea; }
+        .node-header { display: flex; align-items: center; gap: 10px; }
+        .node-icon { font-size: 24px; }
+        .node-desc {
+            font-size: 11px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .canvas {
+            background: #fafafa;
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            min-height: 400px;
+            padding: 10px;
+            position: relative;
+            overflow: hidden;
+            touch-action: pan-x pan-y;
+        }
+        .canvas-placeholder {
+            text-align: center;
+            color: #999;
+            margin-top: 150px;
+            pointer-events: none;
+            font-size: 14px;
+        }
+        .placed-node {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: 3px solid #667eea;
+            position: absolute;
+            cursor: pointer;
+            min-width: 100px;
+            text-align: center;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .placed-node .node-icon { font-size: 28px; margin-bottom: 5px; }
+        .placed-node .node-name { font-weight: 600; font-size: 12px; }
+        .placed-node:active { transform: scale(0.95); }
+        .placed-node.connected { border-color: #48bb78; }
+        .placed-node.selected {
+            border-color: #ffc107;
+            box-shadow: 0 0 20px rgba(255, 193, 7, 0.8);
+        }
+        .placed-node.error { border-color: #f56565; animation: shake 0.5s; }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        .connection-line {
+            position: absolute;
+            height: 4px;
+            background: linear-gradient(90deg, #48bb78, #38a169);
+            transform-origin: left center;
+            pointer-events: all;
+            z-index: 1;
+            cursor: pointer;
+        }
+        .connection-line:active { height: 6px; background: #f56565; }
+        .connection-line::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+            animation: flow 1.5s infinite;
+        }
+        @keyframes flow { 0% { left: -100%; } 100% { left: 200%; } }
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-secondary { background: #e0e0e0; color: #333; }
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .hint-box, .answer-box {
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            display: none;
+            font-size: 14px;
+        }
+        .hint-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+        }
+        .answer-box {
+            background: #e8f5e9;
+            border: 2px solid #4caf50;
+        }
+        .hint-box.show, .answer-box.show { display: block; }
+        .answer-box pre {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        .success-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .success-modal.show { display: flex; }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        .modal-content h2 { color: #48bb78; font-size: 1.8em; margin-bottom: 15px; }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s;
+        }
+        .connection-status {
+            margin-top: 10px;
+            padding: 8px;
+            background: #e3f2fd;
+            border-radius: 5px;
+            font-size: 13px;
+        }
+        .parallel-badge {
+            background: #ff6b6b;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+        .mode-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #667eea;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            z-index: 100;
+            display: none;
+        }
+        .mode-indicator.show { display: block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 ワークフロー構築ゲーム</h1>
+            <p>n8nのようなワークフローを学ぼう！</p>
+            <div class="reset-data" onclick="resetAllData()">🔄 進捗をリセット</div>
+            <div class="level-info">
+                <div><strong>レベル:</strong> <span id="current-level">1</span> / 10</div>
+                <div><strong>クリア:</strong> <span id="cleared-count">0</span> / 10</div>
+            </div>
+            <div class="level-selector" id="level-selector"></div>
+            <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width: 0%"></div></div>
+        </div>
+        <div class="game-area">
+            <div class="instructions">
+                <h3>📋 ミッション <span id="parallel-indicator"></span></h3>
+                <p id="mission-text"></p>
+                <div class="scenario" id="scenario"></div>
+                <div class="device-instruction" id="device-instruction"></div>
+                <div class="connection-status" id="connection-status">接続数: <strong>0</strong></div>
+            </div>
+            <div class="workspace">
+                <div class="node-palette">
+                    <h3>🔧 ノード</h3>
+                    <div id="palette"></div>
+                </div>
+                <div class="canvas" id="canvas">
+                    <div class="canvas-placeholder">ここにノードを配置</div>
+                </div>
+            </div>
+            <div class="hint-box" id="hint-box"><strong>💡 ヒント:</strong><p id="hint-text"></p></div>
+            <div class="answer-box" id="answer-box"><strong>🔍 正解:</strong><pre id="answer-text"></pre></div>
+            <div class="controls">
+                <button class="btn btn-primary" onclick="checkWorkflow()">✅ 実行</button>
+                <button class="btn btn-secondary" onclick="resetCanvas()">🔄 リセット</button>
+                <button class="btn btn-secondary" onclick="showHint()">💡 ヒント</button>
+                <button class="btn btn-secondary" onclick="showAnswer()">🔍 答え</button>
+            </div>
+        </div>
+    </div>
+    <div class="success-modal" id="success-modal">
+        <div class="modal-content">
+            <h2>🎉 クリア！</h2>
+            <p>素晴らしい！正しいワークフローです。</p>
+            <button class="btn btn-primary" onclick="nextLevel()" style="margin-top: 20px;">次のレベルへ →</button>
+        </div>
+    </div>
+    <div class="mode-indicator" id="mode-indicator"></div>
+    <script>
+const L=[{id:1,mission:"問い合わせフォームが送信されたら、自動でメールを送りたい",scenario:"💼 Webサイトの問い合わせフォームから通知が来たら、担当者にメールで知らせる",nodes:["webhook","email"],correctConnections:[["webhook","email"]],hint:"Webhookでフォーム送信をキャッチして、メールノードに繋げます",isParallel:false},{id:2,mission:"新しい注文が入ったら、Slackでチームに通知したい",scenario:"🛒 ECサイトで注文が入ったら、即座にSlackの営業チャンネルに通知",nodes:["webhook","slack"],correctConnections:[["webhook","slack"]],hint:"Webhookで注文データを受け取り、Slackに流します",isParallel:false},{id:3,mission:"重要な通知を、メールとSlack両方に同時送信したい",scenario:"⚡ 緊急アラートを複数のチャネルに同時配信",nodes:["webhook","set","email","slack"],correctConnections:[["webhook","set"],["set","email"],["set","slack"]],hint:"Setで整形後、EmailとSlack両方に並列送信",isParallel:true},{id:4,mission:"問い合わせ内容を判定して、緊急案件だけメール通知したい",scenario:"🔍 「緊急」が含まれる場合のみメール送信、それ以外は何もしない",nodes:["webhook","if","iftrue","iffalse","email"],correctConnections:[["webhook","if"],["if","iftrue"],["if","iffalse"],["iftrue","email"]],hint:"Webhook→IF→IF(True)とIF(False)に分岐→IF(True)からEmailへ。IF(False)はそこで終了",isParallel:true},{id:5,mission:"ブログが更新されたら、自動でXに投稿したい",scenario:"📰 RSSフィードを監視して、新記事があれば自動シェア",nodes:["rss","set","twitter"],correctConnections:[["rss","set"],["set","twitter"]],hint:"RSS→Set→X投稿",isParallel:false},{id:6,mission:"毎朝9時に、今日の予定をXに自動投稿したい",scenario:"⏰ 定期的に情報発信",nodes:["schedule","set","twitter"],correctConnections:[["schedule","set"],["set","twitter"]],hint:"Schedule→Set→X投稿",isParallel:false},{id:7,mission:"RSSとAPIの両方からデータを集めてSlackに送りたい",scenario:"📊 複数ソースから情報収集",nodes:["rss","http","merge","set","slack"],correctConnections:[["rss","merge"],["http","merge"],["merge","set"],["set","slack"]],hint:"RSSとHTTP→Merge→Set→Slack",isParallel:true},{id:8,mission:"Googleドキュメントの内容を、自動でnoteの記事にしたい",scenario:"📝 ドキュメントをワンクリックで公開",nodes:["googledocs","set","note"],correctConnections:[["googledocs","set"],["set","note"]],hint:"GoogleDocs→Set→note",isParallel:false},{id:9,mission:"AIでブログ記事と画像を生成して、noteに投稿したい",scenario:"🤖 手動でテーマ入力したら、AIが文章と画像を自動生成",nodes:["manual","openai-text","openai-image","set","note"],correctConnections:[["manual","openai-text"],["openai-text","openai-image"],["openai-image","set"],["set","note"]],hint:"Manual→AIテキスト→AI画像→Set→note",isParallel:false},{id:10,mission:"RSS・スプレッドシート・APIから情報を集めてXとSlackに配信したい",scenario:"🚀 完全自動化：複数ソース→複数チャネル",nodes:["rss","googlesheets","http","merge","set","twitter","slack"],correctConnections:[["rss","merge"],["googlesheets","merge"],["http","merge"],["merge","set"],["set","twitter"],["set","slack"]],hint:"3ソース→Merge→Set→X&Slack",isParallel:true}];
+const N={webhook:{name:"Webhook",icon:"🔗",description:"外部からのきっかけを受け取る"},email:{name:"Email",icon:"📧",description:"メールを送信"},slack:{name:"Slack",icon:"💬",description:"Slackにメッセージ送信"},set:{name:"Set",icon:"⚙️",description:"データを加工・整形"},if:{name:"IF",icon:"🔀",description:"条件分岐"},iftrue:{name:"IF (True)",icon:"✅",description:"条件がTrueの場合"},iffalse:{name:"IF (False)",icon:"❌",description:"条件がFalseの場合"},rss:{name:"RSS",icon:"📰",description:"RSSフィード取得"},twitter:{name:"X",icon:"𝕏",description:"X投稿"},schedule:{name:"Schedule",icon:"⏰",description:"時刻指定実行"},googledocs:{name:"Google Docs",icon:"📄",description:"ドキュメント取得"},note:{name:"note",icon:"📝",description:"note投稿"},"openai-text":{name:"OpenAI Text",icon:"🤖",description:"AI文章生成"},"openai-image":{name:"OpenAI Image",icon:"🎨",description:"AI画像生成"},http:{name:"HTTP",icon:"🌐",description:"API取得"},merge:{name:"Merge",icon:"🔗",description:"データ統合"},googlesheets:{name:"Sheets",icon:"📊",description:"スプレッドシート"},manual:{name:"Manual",icon:"👆",description:"手動実行"}};
+let lv=1,pn=[],cn=[],cl=JSON.parse(localStorage.getItem('cl')||'[]'),fs=null,nid=0,dn=null,dof={x:0,y:0},isMobile='ontouchstart'in window,selectedPaletteNode=null;
+const cv=document.getElementById('canvas'),mi=document.getElementById('mode-indicator');
+function init(){const l=L[lv-1];document.getElementById('current-level').textContent=lv;document.getElementById('cleared-count').textContent=cl.length;document.getElementById('mission-text').textContent=l.mission;document.getElementById('scenario').textContent=l.scenario;document.getElementById('progress-fill').style.width=(cl.length/L.length*100)+'%';document.getElementById('parallel-indicator').innerHTML=l.isParallel?'<span class="parallel-badge">並列</span>':'';const inst=isMobile?'📱 ノードをタップ→キャンバスをタップで配置。配置後はドラッグで移動':'💻 ノードをドラッグ→キャンバスにドロップ。配置後も移動可能';document.getElementById('device-instruction').textContent=inst;const p=document.getElementById('palette');p.innerHTML='';l.nodes.forEach(t=>{const n=N[t];const d=document.createElement('div');d.className='palette-node';d.dataset.type=t;if(!isMobile){d.draggable=true;d.addEventListener('dragstart',e=>e.dataTransfer.setData('t',t));}else{d.addEventListener('click',()=>selectPaletteNode(d));}d.innerHTML=`<div class="node-header"><span class="node-icon">${n.icon}</span><span>${n.name}</span></div><div class="node-desc">${n.description}</div>`;p.appendChild(d);});updateLevelSelector();reset();}
+function selectPaletteNode(node){if(selectedPaletteNode)selectedPaletteNode.classList.remove('selected');selectedPaletteNode=node;node.classList.add('selected');mi.textContent='📍 キャンバスをタップして配置';mi.classList.add('show');setTimeout(()=>mi.classList.remove('show'),3000);}
+function updateLevelSelector(){const s=document.getElementById('level-selector');s.innerHTML='';for(let i=1;i<=L.length;i++){const b=document.createElement('button');b.className='level-btn'+(i===lv?' active':'')+(cl.includes(i)?' cleared':'');b.textContent=i;b.onclick=()=>{lv=i;init();};s.appendChild(b);}}
+if(!isMobile){cv.addEventListener('dragover',e=>e.preventDefault());cv.addEventListener('drop',e=>{e.preventDefault();const t=e.dataTransfer.getData('t');placeNode(t,e.clientX,e.clientY);});}else{cv.addEventListener('click',e=>{if(selectedPaletteNode&&e.target===cv||e.target.classList.contains('canvas-placeholder')){const t=selectedPaletteNode.dataset.type;const rect=cv.getBoundingClientRect();placeNode(t,e.clientX,e.clientY);selectedPaletteNode.classList.remove('selected');selectedPaletteNode=null;}});}
+function placeNode(t,clientX,clientY){const n=N[t];const pl=cv.querySelector('.canvas-placeholder');if(pl)pl.remove();const d=document.createElement('div');d.className='placed-node';d.dataset.type=t;d.dataset.id='n'+(nid++);d.innerHTML=`<div class="node-icon">${n.icon}</div><div class="node-name">${n.name}</div>`;const rect=cv.getBoundingClientRect();d.style.left=(clientX-rect.left-50)+'px';d.style.top=(clientY-rect.top-50)+'px';if(isMobile){let isDragging=false,startX,startY,startLeft,startTop;d.addEventListener('touchstart',e=>{const touch=e.touches[0];startX=touch.clientX;startY=touch.clientY;startLeft=parseInt(d.style.left);startTop=parseInt(d.style.top);isDragging=false;});d.addEventListener('touchmove',e=>{e.preventDefault();isDragging=true;const touch=e.touches[0];const dx=touch.clientX-startX;const dy=touch.clientY-startY;d.style.left=(startLeft+dx)+'px';d.style.top=(startTop+dy)+'px';rd();});d.addEventListener('touchend',()=>{if(!isDragging)cc(d);});}else{d.addEventListener('mousedown',sd);d.addEventListener('click',()=>!dn&&cc(d));}cv.appendChild(d);pn.push(d);}
+function sd(e){if(e.button!==0)return;dn=e.currentTarget;const r=dn.getBoundingClientRect();const cr=cv.getBoundingClientRect();dof.x=e.clientX-r.left;dof.y=e.clientY-r.top;document.addEventListener('mousemove',dd);document.addEventListener('mouseup',su);e.preventDefault();}
+function dd(e){if(!dn)return;const cr=cv.getBoundingClientRect();dn.style.left=(e.clientX-cr.left-dof.x)+'px';dn.style.top=(e.clientY-cr.top-dof.y)+'px';rd();}
+function su(){document.removeEventListener('mousemove',dd);document.removeEventListener('mouseup',su);dn=null;}
+function cc(n){if(!fs){fs=n;n.classList.add('selected');}else if(fs===n){fs.classList.remove('selected');fs=null;}else{cn.push({from:fs.dataset.type,to:n.dataset.type,fe:fs,te:n});fs.classList.remove('selected');fs.classList.add('connected');n.classList.add('connected');dl(fs,n);fs=null;us();}}
+function dl(f,t){const l=cl2(f,t);if(isMobile){l.addEventListener('touchstart',function(e){e.stopPropagation();if(confirm('この接続を削除しますか？'))rc(this);});}else{l.onclick=function(){rc(this);};}cv.appendChild(l);}
+function cl2(f,t){const fr=f.getBoundingClientRect();const tr=t.getBoundingClientRect();const cr=cv.getBoundingClientRect();const fx=fr.left+fr.width/2-cr.left;const fy=fr.top+fr.height/2-cr.top;const tx=tr.left+tr.width/2-cr.left;const ty=tr.top+tr.height/2-cr.top;const len=Math.sqrt(Math.pow(tx-fx,2)+Math.pow(ty-fy,2));const ang=Math.atan2(ty-fy,tx-fx)*180/Math.PI;const l=document.createElement('div');l.className='connection-line';l.style.width=len+'px';l.style.left=fx+'px';l.style.top=fy+'px';l.style.transform=`rotate(${ang}deg)`;l.dataset.from=f.dataset.id;l.dataset.to=t.dataset.id;return l;}
+function rd(){document.querySelectorAll('.connection-line').forEach(l=>{const f=document.querySelector(`[data-id="${l.dataset.from}"]`);const t=document.querySelector(`[data-id="${l.dataset.to}"]`);if(f&&t){const nl=cl2(f,t);l.style.width=nl.style.width;l.style.left=nl.style.left;l.style.top=nl.style.top;l.style.transform=nl.style.transform;}});}
+function rc(l){const fi=l.dataset.from;const ti=l.dataset.to;cn=cn.filter(c=>!(c.fe.dataset.id===fi&&c.te.dataset.id===ti));l.remove();us();}
+function us(){document.getElementById('connection-status').innerHTML=`接続数: <strong>${cn.length}</strong>`;}
+function checkWorkflow(){const l=L[lv-1];const pt=pn.map(n=>n.dataset.type);const mn=l.nodes.filter(n=>!pt.includes(n));if(mn.length>0){er(`未配置: ${mn.map(t=>N[t].name).join(', ')}`);return;}const uc=cn.map(c=>[c.from,c.to]);const cc=l.correctConnections;const ok=cc.every(cor=>uc.some(u=>u[0]===cor[0]&&u[1]===cor[1]))&&uc.length===cc.length;if(ok){if(!cl.includes(lv)){cl.push(lv);localStorage.setItem('cl',JSON.stringify(cl));}updateLevelSelector();document.getElementById('cleared-count').textContent=cl.length;document.getElementById('progress-fill').style.width=(cl.length/L.length*100)+'%';const modal=document.getElementById('success-modal');const msg=modal.querySelector('p');if(cl.length===L.length){msg.textContent='🎊 パーフェクト！全レベルクリアおめでとうございます！';}else{msg.textContent='素晴らしい！正しいワークフローです。';}modal.classList.add('show');}else{er("接続が違います。ヒントを見てください");}}
+function nextLevel(){document.getElementById('success-modal').classList.remove('show');if(lv<L.length){lv++;init();}else{alert('🎉 Xでシェアして、自動化仲間を見つけよう！');}}
+function er(m){pn.forEach(n=>{n.classList.add('error');setTimeout(()=>n.classList.remove('error'),500);});alert(m);}
+function showHint(){const l=L[lv-1];document.getElementById('hint-text').textContent=l.hint;document.getElementById('hint-box').classList.add('show');document.getElementById('answer-box').classList.remove('show');}
+function showAnswer(){const l=L[lv-1];let answerText='必要なノード:\n';l.nodes.forEach(t=>answerText+=`  - ${N[t].icon} ${N[t].name}\n`);answerText+='\n正しい接続:\n';l.correctConnections.forEach(c=>answerText+=`  ${N[c[0]].name} → ${N[c[1]].name}\n`);document.getElementById('answer-text').textContent=answerText;document.getElementById('answer-box').classList.add('show');document.getElementById('hint-box').classList.remove('show');}
+function resetCanvas(){cv.innerHTML='<div class="canvas-placeholder">ここにノードを配置</div>';pn=[];cn=[];fs=null;nid=0;selectedPaletteNode=null;document.getElementById('hint-box').classList.remove('show');document.getElementById('answer-box').classList.remove('show');us();const paletteNodes=document.querySelectorAll('.palette-node');paletteNodes.forEach(n=>n.classList.remove('selected'));}
+function reset(){resetCanvas();}
+function resetAllData(){if(confirm('すべてのクリア記録を削除しますか？')){localStorage.removeItem('cl');cl=[];lv=1;init();}}
+document.addEventListener('keydown',e=>{if(e.key===' '){e.preventDefault();checkWorkflow();}else if(e.key==='r'||e.key==='R'){e.preventDefault();resetCanvas();}else if(e.key==='h'||e.key==='H'){e.preventDefault();showHint();}});
+init();
+    </script>
+</body>
+</html>}
